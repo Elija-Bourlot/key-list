@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deister Key List – Search & Filters</title>
+  <style>
+    :root { --bg:#0b0c10; --card:#14161d; --text:#e8e8ea; --muted:#a7a7ad; --line:#2a2d39; }
+    * { box-sizing: border-box; }
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0c10, #0b0c10 60%, #0f1118);
+      color: var(--text);
+    }
+    header{
+      padding: 24px 16px 12px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1{ margin:0 0 6px; font-size: 20px; letter-spacing: .2px; }
+    .sub{ margin:0; color: var(--muted); font-size: 13px; }
+
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; }
+
+    .panel{
+      background: rgba(20,22,29,.9);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 820px){
+      .controls{ grid-template-columns: 1.2fr .8fr; align-items: start; }
+    }
+
+    .searchRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    input[type="search"]{
+      flex: 1 1 320px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0f1118;
+      color: var(--text);
+      outline: none;
+    }
+    input[type="search"]::placeholder{ color: #7f8087; }
+    .btn{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0f1118;
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{ border-color:#3a3f52; }
+    .btn:active{ transform: translateY(1px); }
+
+    .filters{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 12px;
+      padding-top: 6px;
+    }
+    .chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f1118;
+      color: var(--text);
+      font-size: 13px;
+    }
+    .chip input{ accent-color: #7aa2ff; }
+
+    .meta{
+      display:flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items:center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .meta code{
+      background:#0f1118;
+      border:1px solid var(--line);
+      padding:2px 6px;
+      border-radius:8px;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .tableWrap{
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(20,22,29,.75);
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th{
+      position: sticky; top:0;
+      background: #111421;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      padding: 10px 12px;
+      font-weight: 650;
+      cursor: pointer;
+      user-select:none;
+      white-space: nowrap;
+    }
+    thead th small{ color: var(--muted); font-weight: 500; margin-left: 6px; }
+    tbody td{
+      border-top: 1px solid rgba(42,45,57,.7);
+      padding: 10px 12px;
+      vertical-align: top;
+    }
+    tbody tr:hover{ background: rgba(122,162,255,.06); }
+    .muted{ color: var(--muted); }
+    .tag{
+      display:inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background:#0f1118;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .empty{ color: #7f8087; font-style: italic; }
+    footer{ color: var(--muted); font-size: 12px; margin-top: 14px; }
+    .kbd{
+      border:1px solid var(--line);
+      background:#0f1118;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Deister Key List – Search & Filters</h1>
+    <p class="sub">Busca por qualquer texto (key number, prédio, tipo de usuário) + filtros por <code>user</code>.</p>
+  </header>
+
+  <div class="wrap">
+    <div class="panel">
+      <div class="controls">
+        <div>
+          <div class="searchRow">
+            <input id="q" type="search" placeholder="Buscar… (ex: 40 george, hope park, master, 2nd floor, etc)" autocomplete="off" />
+            <button class="btn" id="clearBtn" title="Limpar busca e filtros">Limpar</button>
+            <button class="btn" id="csvBtn" title="Exportar CSV do resultado filtrado">Exportar CSV</button>
+          </div>
+          <div class="meta">
+            <div>
+              Resultados: <strong id="count">0</strong> / <span id="total">0</span>
+              <span class="muted">• Ordene clicando nos títulos das colunas</span>
+            </div>
+            <div class="muted">
+              Dica: <span class="kbd">Ctrl</span> + <span class="kbd">F</span> também funciona, mas a busca acima filtra.
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Filtrar por User:</div>
+          <div class="filters" id="filters"></div>
+        </div>
+      </div>
+
+      <div class="tableWrap" role="region" aria-label="Tabela de chaves" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="key" data-type="number">Key Number <small id="sortKey"></small></th>
+              <th data-col="location" data-type="text">Location <small id="sortLoc"></small></th>
+              <th data-col="user" data-type="text">User <small id="sortUser"></small></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <footer>
+        Sugestão: publique isso no GitHub Pages e compartilhe o link com o time. Se quiser, dá pra adicionar “atalhos” (ex: botões rápidos para “Cleaners Master”, “Security”, etc).
+      </footer>
+    </div>
+  </div>
+
+<script>
+  // ---- DATA (da sua tabela) ----
+  const rows = [
+    {key:1, location:"Appleton tower", user:"Security"},
+    {key:2, location:"40 GS/Café", user:"Security"},
+    {key:3, location:"50 GS / 55 - 60 GS", user:"Security"},
+    {key:4, location:"New Business School", user:"Security"},
+    {key:5, location:"50 George Square 3rd Floor Sub", user:"Cleaners"},
+    {key:6, location:"Ladies Basement 40 George Square", user:"Cleaners"},
+    {key:7, location:"40 George Square Basement", user:"Cleaners"},
+    {key:8, location:"40 George Square – Ground Floor", user:"Cleaners"},
+    {key:9, location:"40 George Square – Lecture Halls", user:"Cleaners"},
+    {key:10, location:"40 George Square – Floor 1", user:"Cleaners"},
+    {key:11, location:"40 George Square – Floor 2", user:"Cleaners"},
+    {key:12, location:"40 George Square – Floor 3", user:"Cleaners"},
+    {key:13, location:"40 George Square – Floor 4", user:"Cleaners"},
+    {key:14, location:"40 George Square – Floor 5 -DHT", user:"Cleaners"},
+    {key:15, location:"40 George Square – Floor 6", user:"Cleaners"},
+    {key:16, location:"40 George Square – Floor 7", user:"Cleaners"},
+    {key:17, location:"40 George Square – Floor 8", user:"Cleaners"},
+    {key:18, location:"40 George Square – Floor 9", user:"Cleaners"},
+    {key:19, location:"40 George Square – Floor 10", user:"Cleaners"},
+    {key:20, location:"40 George Square – Floor 11", user:"Cleaners"},
+    {key:21, location:"40 George Square – Floor 12", user:"Cleaners"},
+    {key:22, location:"40 George Square – Floor 13", user:"Cleaners"},
+    {key:23, location:"Appleton Tower", user:"Servitors"},
+    {key:24, location:"7 George Sq – Basement", user:"Cleaners"},
+    {key:25, location:"7 George Sq – Ground Floor", user:"Cleaners"},
+    {key:26, location:"7 George Sq – 1st Floor", user:"Cleaners"},
+    {key:27, location:"7 George Sq – 2nd Floor", user:"Cleaners"},
+    {key:28, location:"55 George square", user:"Cleaners"},
+    {key:29, location:"56 George square", user:"Cleaners"},
+    {key:30, location:"57 George square", user:"Cleaners"},
+    {key:31, location:"58 George square", user:"Cleaners"},
+    {key:32, location:"59 - 60 George square", user:"Cleaners"},
+    {key:33, location:"50 George Square - ground", user:"Cleaners"},
+    {key:34, location:"50 George Square – 1st floor (2 keys)", user:"Cleaners"},
+    {key:35, location:"50 George Square – 1st floor (1 key)", user:"Cleaners"},
+    {key:36, location:"50 George Square – 2nd floor (2keys)", user:"Cleaners"},
+    {key:37, location:"50 George Square – 2nd floor (1key)", user:"Cleaners"},
+    {key:38, location:"50 George Square – 3rd floor (2 keys)", user:"Cleaners"},
+    {key:39, location:"50 George Square – 4th floor (2keys)", user:"Cleaners"},
+    {key:40, location:"50 George Square – 4th floor (1key)", user:"Cleaners"},
+    {key:41, location:"Business School", user:"Servitors"},
+    {key:42, location:"50 George square - Ground Floor", user:"Cleaners"},
+    {key:43, location:"7 George square – Ground Floor", user:"Cleaners"},
+    {key:44, location:"George Square Gardens", user:"Security"},
+    {key:45, location:"3 Hope Park square", user:"Security"},
+    {key:46, location:"19 George square", user:"Security"},
+    {key:47, location:"Plant and Comms room", user:"Security"},
+    {key:48, location:"IMGS Masters – 16 - 20 George square", user:"Servitors"},
+    {key:49, location:"50GS - Front and Rear Door", user:"Servitors"},
+    {key:50, location:"50GS - Ground Floor Master", user:"Servitors"},
+    {key:51, location:"50GS – 1st Floor Master", user:"Servitors"},
+    {key:52, location:"50GS – 2nd Floor Master", user:"Servitors"},
+    {key:53, location:"50GS – 3rd Floor Master", user:"Servitors"},
+    {key:54, location:"50GS 4th Floor Master", user:"Servitors"},
+    {key:55, location:"50GS – Lower Ground Master", user:"Servitors"},
+    {key:56, location:"50GS – Servitors Room", user:"Servitors"},
+    {key:57, location:"50GS – All Masters 1", user:"Servitors"},
+    {key:58, location:"50GS – All Masters 2", user:"Servitors"},
+    {key:59, location:"50GS – Cleaners Master", user:"Servitors"},
+    {key:60, location:"50 George Square", user:"Servitors"},
+    {key:61, location:"50 George Square", user:"Servitors"},
+    {key:62, location:"50 George Square", user:"Servitors"},
+    {key:63, location:"50 George Square", user:"Servitors"},
+    {key:64, location:"50 George Square", user:"Servitors"},
+    {key:65, location:"40 george square", user:"Servitors"},
+    {key:66, location:"NA", user:"NA"},
+    {key:67, location:"CMB", user:"Servitors"},
+    {key:68, location:"21 Buccleuch Place 2.06", user:"Security"}, // normalize
+    {key:69, location:"Buccleuch Place 2,5,7,8,12", user:"Accommodation"},
+    {key:70, location:"12,97 Buccleuch Street/ 8 Hope Park Square", user:"Accommodation"},
+    {key:71, location:"West Nicolson Street 7,11,13,15,19", user:"Accommodation"},
+    {key:72, location:"92,96 Nicolson St / 3 Davie St / 1,11 West Richmond St", user:"Accommodation"},
+    {key:73, location:"", user:""},
+    {key:74, location:"1 George Square", user:"Servitors"},
+    {key:75, location:"40 George Square - Switch Cupboard LGZ29", user:"Security"},
+    {key:76, location:"40 George Square Halls", user:"Servitors"},
+    {key:77, location:"Gordon Aikman Lecture Theatre", user:"Servitors"},
+    {key:78, location:"", user:""},
+    {key:79, location:"", user:""},
+    {key:80, location:"30 - 34 Buccleuch", user:"Servitors"},
+    {key:81, location:"Buccleuch Classrooms", user:"Servitors"},
+    {key:82, location:"", user:""},
+    {key:83, location:"12 - 25 Buccleuch Place", user:"Servitors"},
+    {key:84, location:"7 George Square", user:"Servitors"},
+    {key:85, location:"55 - 60 George Square", user:"Servitors"},
+    {key:86, location:"18 - 27 George Square", user:"Servitors"},
+    {key:87, location:"", user:""},
+    {key:88, location:"22B Buccleuch Place", user:"Cleaners"},
+    {key:89, location:"", user:""},
+    {key:90, location:"34 Buccleuch Place", user:"Cleaners"},
+    {key:91, location:"Business School Lower ground", user:"Cleaners"},
+    {key:92, location:"Business School – Ground Floor", user:"Cleaners"},
+    {key:93, location:"Business School level 1", user:"Cleaners"},
+    {key:94, location:"Business School level 2", user:"Cleaners"},
+    {key:95, location:"Business School level 3", user:"Cleaners"},
+    {key:96, location:"Business School level 4", user:"Cleaners"},
+    {key:97, location:"17 Buccleuch Place", user:"Cleaners"},
+    {key:98, location:"18 Buccleuch Place", user:"Cleaners"},
+    {key:99, location:"19 Buccleuch Place", user:"Cleaners"},
+    {key:100, location:"21 Buccleuch Place", user:"Cleaners"},
+    {key:101, location:"22 Buccleuch Place", user:"Cleaners"},
+    {key:102, location:"22A Buccleuch Place", user:"Cleaners"},
+    {key:103, location:"34 Buccleuch Place - 3rd Floor", user:"Cleaners"},
+    {key:104, location:"24 Buccleuch Place - 1st Floor", user:"Cleaners"},
+    {key:105, location:"24 Buccleuch Place – 2nd Floor", user:"Cleaners"},
+    {key:106, location:"24 Buccleuch Place – 3rd Floor", user:"Cleaners"},
+    {key:107, location:"24 Buccleuch Place – Attic", user:"Cleaners"},
+    {key:108, location:"25 Buccleuch Place", user:"Cleaners"},
+    {key:109, location:"30 Buccleuch Place", user:"Cleaners"},
+    {key:110, location:"31 Buccleuch Place", user:"Cleaners"},
+    {key:111, location:"31 Buccleuch Place – 2nd Floor", user:"Cleaners"},
+    {key:112, location:"31 Buccleuch Place – 3rd Floor", user:"Cleaners"},
+    {key:113, location:"31 Buccleuch Place – 4th Floor", user:"Cleaners"},
+    {key:114, location:"33 Buccleuch Place", user:"Cleaners"},
+    {key:115, location:"34 Buccleuch Place – 1st Floor", user:"Cleaners"},
+    {key:116, location:"34 Buccleuch Place - 2nd Floor", user:"Cleaners"},
+    {key:117, location:"23 Buccleuch Place", user:"Cleaners"},
+    {key:118, location:"34 Buccleuch Place – 4th Floor", user:"Cleaners"},
+    {key:119, location:"2 Hope Park square", user:"Cleaners"},
+    {key:120, location:"8 Hope Park square", user:"Cleaners"},
+    {key:121, location:"9 Hope Park square", user:"Cleaners"},
+    {key:122, location:"Quartermile (Returned to project team)", user:""},
+    {key:123, location:"RHSC (20 Sylvan Place)", user:"Cleaners"},
+    {key:124, location:"McKenzie medical", user:"Cleaners"},
+    {key:125, location:"12 Buccleuch Street", user:"Cleaners"},
+    {key:126, location:"", user:""},
+    {key:127, location:"", user:""},
+    {key:128, location:"", user:""}
+  ];
+
+  // ---- UI STATE ----
+  const q = document.getElementById('q');
+  const tbody = document.getElementById('tbody');
+  const countEl = document.getElementById('count');
+  const totalEl = document.getElementById('total');
+  const filtersEl = document.getElementById('filters');
+  const clearBtn = document.getElementById('clearBtn');
+  const csvBtn = document.getElementById('csvBtn');
+
+  totalEl.textContent = rows.length;
+
+  const USER_ORDER = ["Servitors","Cleaners","Security","Accommodation","NA",""]; // ordem desejada
+  const normalizeUser = (u) => {
+    if (!u) return "";
+    const s = String(u).trim();
+    if (!s) return "";
+    const low = s.toLowerCase();
+    if (low === "security") return "Security";
+    if (low === "cleaners") return "Cleaners";
+    if (low === "servitors") return "Servitors";
+    if (low === "accommodation") return "Accommodation";
+    if (low === "na") return "NA";
+    return s;
+  };
+
+  // Normaliza users na base (por segurança)
+  rows.forEach(r => r.user = normalizeUser(r.user));
+
+  const users = Array.from(new Set(rows.map(r => normalizeUser(r.user)))).sort((a,b)=>{
+    const ia = USER_ORDER.indexOf(a);
+    const ib = USER_ORDER.indexOf(b);
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib) || a.localeCompare(b);
+  });
+
+  // selected users (default: todos marcados, exceto vazio)
+  const selectedUsers = new Set(users.filter(u => u !== ""));
+
+  // Sorting state
+  let sortCol = "key";
+  let sortDir = "asc"; // asc | desc
+
+  // ---- RENDER FILTERS ----
+  function renderFilters(){
+    filtersEl.innerHTML = "";
+    users.forEach(u => {
+      const id = "u_" + (u || "vazio");
+      const label = document.createElement('label');
+      label.className = "chip";
+      const cb = document.createElement('input');
+      cb.type = "checkbox";
+      cb.id = id;
+
+      const isEmpty = (u === "");
+      cb.checked = isEmpty ? false : selectedUsers.has(u);
+
+      cb.addEventListener('change', () => {
+        if (isEmpty) {
+          // "vazio" é opcional; quando marcado, vamos filtrar por vazio também
+          if (cb.checked) selectedUsers.add("");
+          else selectedUsers.delete("");
+        } else {
+          if (cb.checked) selectedUsers.add(u);
+          else selectedUsers.delete(u);
+        }
+        render();
+      });
+
+      const span = document.createElement('span');
+      span.textContent = u === "" ? "Sem user" : u;
+
+      label.appendChild(cb);
+      label.appendChild(span);
+      filtersEl.appendChild(label);
+    });
+  }
+
+  // ---- FILTER + SEARCH ----
+  function applyFilters(){
+    const term = q.value.trim().toLowerCase();
+
+    return rows.filter(r => {
+      const u = normalizeUser(r.user);
+      const passUser = selectedUsers.size === 0 ? true : selectedUsers.has(u);
+      if (!passUser) return false;
+
+      if (!term) return true;
+
+      const hay = `${r.key}\t${(r.location||"")}\t${u}`.toLowerCase();
+      return hay.includes(term);
+    });
+  }
+
+  // ---- SORT ----
+  function sortData(data){
+    const dir = sortDir === "asc" ? 1 : -1;
+    const col = sortCol;
+
+    const getVal = (r) => {
+      if (col === "key") return Number(r.key);
+      if (col === "location") return (r.location || "").toLowerCase();
+      if (col === "user") return (normalizeUser(r.user) || "").toLowerCase();
+      return "";
+    };
+
+    return data.slice().sort((a,b) => {
+      const va = getVal(a), vb = getVal(b);
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+      return String(va).localeCompare(String(vb)) * dir;
+    });
+  }
+
+  // ---- RENDER TABLE ----
+  function render(){
+    let data = applyFilters();
+    data = sortData(data);
+
+    countEl.textContent = data.length;
+
+    tbody.innerHTML = "";
+    for (const r of data){
+      const tr = document.createElement('tr');
+
+      const tdKey = document.createElement('td');
+      tdKey.textContent = r.key;
+
+      const tdLoc = document.createElement('td');
+      tdLoc.textContent = r.location || "";
+      if (!r.location) tdLoc.innerHTML = '<span class="empty">—</span>';
+
+      const tdUser = document.createElement('td');
+      const u = normalizeUser(r.user);
+      if (!u) tdUser.innerHTML = '<span class="empty">—</span>';
+      else tdUser.innerHTML = `<span class="tag">${escapeHtml(u)}</span>`;
+
+      tr.appendChild(tdKey);
+      tr.appendChild(tdLoc);
+      tr.appendChild(tdUser);
+      tbody.appendChild(tr);
+    }
+
+    // sort indicators
+    document.getElementById("sortKey").textContent = sortCol==="key" ? (sortDir==="asc" ? "▲" : "▼") : "";
+    document.getElementById("sortLoc").textContent = sortCol==="location" ? (sortDir==="asc" ? "▲" : "▼") : "";
+    document.getElementById("sortUser").textContent = sortCol==="user" ? (sortDir==="asc" ? "▲" : "▼") : "";
+  }
+
+  // ---- EVENTS ----
+  q.addEventListener('input', render);
+
+  clearBtn.addEventListener('click', () => {
+    q.value = "";
+    selectedUsers.clear();
+    // volta ao padrão: todos (menos vazio)
+    users.forEach(u => { if (u !== "") selectedUsers.add(u); });
+    renderFilters();
+    render();
+  });
+
+  csvBtn.addEventListener('click', () => {
+    const data = sortData(applyFilters());
+    const csv = toCSV(data);
+    downloadText(csv, "deister_key_list_filtered.csv", "text/csv;charset=utf-8");
+  });
+
+  // Sorting by header click
+  document.querySelectorAll('thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (!col) return;
+      if (sortCol === col) sortDir = (sortDir === "asc") ? "desc" : "asc";
+      else { sortCol = col; sortDir = "asc"; }
+      render();
+    });
+  });
+
+  // ---- UTILS ----
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    })[c]);
+  }
+
+  function toCSV(data){
+    const header = ["Key Number","Location","User"];
+    const lines = [header.join(",")];
+    for (const r of data){
+      const row = [
+        r.key,
+        csvCell(r.location || ""),
+        csvCell(normalizeUser(r.user) || "")
+      ];
+      lines.push(row.join(","));
+    }
+    return lines.join("\n");
+  }
+  function csvCell(v){
+    const s = String(v).replace(/"/g,'""');
+    return `"${s}"`;
+  }
+  function downloadText(text, filename, mime){
+    const blob = new Blob([text], {type: mime});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+  }
+
+  // init
+  renderFilters();
+  render();
+</script>
+</body>
+</html>
