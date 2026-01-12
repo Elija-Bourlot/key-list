@@ -7,7 +7,6 @@
   <style>
     :root{
       --bg:#0b0c10;
-      --card:#121521;
       --text:#eef0f4;
       --muted:#a7adbb;
       --line:#2a2f44;
@@ -23,7 +22,7 @@
       color: var(--text);
     }
 
-    /* Sticky top title bar */
+    /* Sticky title bar */
     .topbar{
       position: sticky;
       top: 0;
@@ -81,12 +80,14 @@
       flex-direction: column;
       gap: 10px;
     }
+
     .row{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
     }
+
     input[type="search"]{
       flex: 1 1 260px;
       min-width: 220px;
@@ -107,9 +108,15 @@
       color: var(--text);
       cursor:pointer;
       user-select:none;
+      white-space: nowrap;
     }
     .btn:hover{ border-color:#3a4260; }
     .btn:active{ transform: translateY(1px); }
+    .btn-sm{
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
 
     .filtersTitle{
       color: var(--muted);
@@ -133,51 +140,69 @@
     }
     .chip input{ accent-color: var(--accent); }
 
-    /* Table scroll container */
+    /* Actions below filters */
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+
+    /* Table scroll container (vertical only) */
     .tableWrap{
       margin-top: 12px;
       border: 1px solid rgba(42,47,68,.9);
       border-radius: 14px;
       background: rgba(18,21,33,.8);
 
-      /* IMPORTANT: make the table itself scrollable */
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;           /* no horizontal scroll */
       -webkit-overflow-scrolling: touch;
 
-      /* will be set dynamically by JS for perfect fit */
-      max-height: 60vh;
+      max-height: 60vh;             /* JS will improve sizing */
     }
 
     table{
       width:100%;
       border-collapse: collapse;
       font-size: 13px;
-      min-width: 560px; /* helps mobile horizontal scroll if needed */
+      table-layout: fixed;          /* forces columns to fit */
     }
 
-    /* Sticky header inside the table scroll area */
     thead th{
       position: sticky;
-      top: 0;                 /* <-- fixed at top of tableWrap */
+      top: 0;                       /* fixed at top of tableWrap */
       z-index: 20;
       background: rgba(17,21,34,.98);
       border-bottom: 1px solid rgba(42,47,68,.9);
       text-align:left;
-      padding: 10px 12px;
-      font-weight: 700;
-      cursor:pointer;
+      padding: 10px 10px;
+      font-weight: 750;
       user-select:none;
       white-space: nowrap;
+      cursor:pointer;
     }
     thead th small{ color: var(--muted); font-weight: 700; margin-left: 6px; }
 
     tbody td{
       border-top: 1px solid rgba(42,47,68,.55);
-      padding: 10px 12px;
+      padding: 10px 10px;
       vertical-align: top;
-      background: transparent;
+      overflow-wrap: anywhere;      /* wrap long text */
+      word-break: break-word;
     }
     tbody tr:hover{ background: rgba(122,162,255,.06); }
+
+    /* Column sizing */
+    .col-key{ width: 6ch; }         /* room for 3 digits + padding */
+    .col-user{ width: 10ch; }       /* compact user column */
+    .col-loc{ width: auto; }
+
+    /* Center User column (header + cells) */
+    th.user, td.user{ text-align:center; }
+
+    /* Key column: compact, centred */
+    th.key, td.key{ text-align:center; }
 
     .tag{
       display:inline-block;
@@ -190,12 +215,6 @@
     }
     .empty{ color:#7f8698; font-style: italic; }
 
-    .btn-sm{
-      padding: 6px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-    }
-
     @media (min-width: 860px){
       .topbar-inner{
         flex-direction: row;
@@ -205,11 +224,15 @@
       }
       h1{ font-size: 18px; }
       .subtitle{ max-width: 560px; text-align:right; }
+
       .controls{
         display:grid;
         grid-template-columns: 1.2fr .8fr;
         gap: 12px;
         align-items: start;
+      }
+      .actions{
+        justify-content: flex-start;
       }
     }
 
@@ -277,8 +300,11 @@
       margin-top: 8px;
       line-height: 1.35;
     }
-    .danger{
-      border-color: rgba(255,120,120,.65) !important;
+    .warn{
+      color: #ffcc80;
+      font-size: 12px;
+      display:none;
+      line-height:1.35;
     }
   </style>
 </head>
@@ -287,7 +313,7 @@
     <div class="topbar-inner">
       <div>
         <h1>Deister Key List</h1>
-        <p class="subtitle">Search across key number, location and user. Use filters for user groups.</p>
+        <p class="subtitle">Search across key, location and user. Use filters to narrow results.</p>
       </div>
       <div class="top-meta">
         <div>Results: <strong id="count">0</strong> / <span id="total">0</span></div>
@@ -302,13 +328,18 @@
           <div class="row">
             <input id="q" type="search" placeholder="Search… e.g. 40 George, Hope Park, Master, 2nd Floor" autocomplete="off" />
             <button class="btn" id="clearBtn" title="Clear search and filters">Clear</button>
-            <button class="btn" id="addBtn" title="Add a new key">Add key</button>
           </div>
         </div>
 
         <div>
           <div class="filtersTitle">Filter by user:</div>
           <div class="filters" id="filters"></div>
+
+          <!-- Buttons moved below filters -->
+          <div class="actions">
+            <button class="btn" id="addBtn" title="Add a new key">Add key</button>
+            <button class="btn" id="editBtn" title="Edit an existing key by number">Edit key</button>
+          </div>
         </div>
       </div>
 
@@ -316,10 +347,9 @@
         <table>
           <thead>
             <tr>
-              <th data-col="key">Key # <small id="sortKey"></small></th>
-              <th data-col="location">Location <small id="sortLoc"></small></th>
-              <th data-col="user">User <small id="sortUser"></small></th>
-              <th data-col="actions" style="cursor:default;">Edit</th>
+              <th class="key col-key" data-col="key">Key <small id="sortKey"></small></th>
+              <th class="col-loc" data-col="location">Location <small id="sortLoc"></small></th>
+              <th class="user col-user" data-col="user">User <small id="sortUser"></small></th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -328,7 +358,7 @@
     </div>
   </div>
 
-  <!-- Modal -->
+  <!-- Modal (used for Add and Edit) -->
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head">
@@ -337,9 +367,18 @@
       </div>
       <div class="modal-body">
         <form class="form" id="form">
+          <!-- For Edit flow: user enters the key to edit -->
+          <div id="editPickBlock" style="display:none;">
+            <label>
+              <div class="field-label">Key to edit (1–999)</div>
+              <input class="input" id="pickKey" type="number" min="1" max="999" inputmode="numeric" />
+            </label>
+            <div class="warn" id="pickWarn">Key not found. Please enter an existing key number.</div>
+          </div>
+
           <label>
-            <div class="field-label">Key number</div>
-            <input class="input" id="fKey" type="number" min="1" required />
+            <div class="field-label">Key (1–999)</div>
+            <input class="input" id="fKey" type="number" min="1" max="999" required inputmode="numeric" />
           </label>
 
           <label>
@@ -353,12 +392,12 @@
               <option value="Servitors">Servitors</option>
               <option value="Cleaners">Cleaners</option>
               <option value="Security">Security</option>
-              <option value="Accommodation">Accommodation</option>
+              <option value="Accomm.">Accomm.</option>
             </select>
           </label>
 
           <div class="form-actions">
-            <button class="btn btn-sm danger" type="button" id="deleteBtn" style="display:none;">Delete</button>
+            <button class="btn btn-sm" type="button" id="cancelBtn">Cancel</button>
             <button class="btn btn-sm" type="submit" id="saveBtn">Save</button>
           </div>
 
@@ -372,7 +411,6 @@
 
 <script>
   // ---------------- DATA ----------------
-  // NA and blank-user rows stay in data but are excluded from display and filters.
   const rows = [
     {key:1, location:"Appleton tower", user:"Security"},
     {key:2, location:"40 GS/Café", user:"Security"},
@@ -512,7 +550,8 @@
     if (low === "security") return "Security";
     if (low === "cleaners") return "Cleaners";
     if (low === "servitors") return "Servitors";
-    if (low === "accommodation") return "Accommodation";
+    if (low === "accommodation") return "Accomm.";
+    if (low === "accomm." || low === "accomm") return "Accomm.";
     if (low === "na") return "NA";
     return s;
   }
@@ -526,22 +565,28 @@
   const filtersEl = document.getElementById('filters');
   const clearBtn = document.getElementById('clearBtn');
   const addBtn = document.getElementById('addBtn');
+  const editBtn = document.getElementById('editBtn');
   const tableWrap = document.getElementById('tableWrap');
 
   // Modal elements
   const modal = document.getElementById("modal");
   const modalTitle = document.getElementById("modalTitle");
   const closeModalBtn = document.getElementById("closeModalBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
   const form = document.getElementById("form");
+
+  const editPickBlock = document.getElementById("editPickBlock");
+  const pickKey = document.getElementById("pickKey");
+  const pickWarn = document.getElementById("pickWarn");
+
   const fKey = document.getElementById("fKey");
   const fLocation = document.getElementById("fLocation");
   const fUser = document.getElementById("fUser");
-  const deleteBtn = document.getElementById("deleteBtn");
 
   totalEl.textContent = rows.length;
 
   // Allowed users (filters exclude NA and blank user)
-  const allowedUsersOrder = ["Servitors","Cleaners","Security","Accommodation"];
+  const allowedUsersOrder = ["Servitors","Cleaners","Security","Accomm."];
   const users = Array.from(new Set(rows.map(r => r.user)))
     .filter(u => u && u !== "NA" && allowedUsersOrder.includes(u))
     .sort((a,b)=> allowedUsersOrder.indexOf(a) - allowedUsersOrder.indexOf(b));
@@ -554,7 +599,7 @@
   let sortDir = "asc"; // asc | desc
 
   // ---------------- LOCAL STORAGE ----------------
-  const STORAGE_KEY = "deister_key_list_v1";
+  const STORAGE_KEY = "deister_key_list_v2";
 
   function loadRows(){
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -565,7 +610,6 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
   }
 
-  // If saved exists, replace initial dataset
   const saved = loadRows();
   if (saved && Array.isArray(saved) && saved.length){
     rows.length = 0;
@@ -648,26 +692,20 @@
       const tr = document.createElement('tr');
 
       const tdKey = document.createElement('td');
+      tdKey.className = "key";
       tdKey.textContent = r.key;
 
       const tdLoc = document.createElement('td');
+      tdLoc.textContent = r.location || "";
       if (!r.location) tdLoc.innerHTML = '<span class="empty">—</span>';
-      else tdLoc.textContent = r.location;
 
       const tdUser = document.createElement('td');
+      tdUser.className = "user";
       tdUser.innerHTML = `<span class="tag">${escapeHtml(r.user)}</span>`;
-
-      const tdAct = document.createElement('td');
-      const editBtn = document.createElement('button');
-      editBtn.className = "btn btn-sm";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener('click', () => openEditModal(r.key));
-      tdAct.appendChild(editBtn);
 
       tr.appendChild(tdKey);
       tr.appendChild(tdLoc);
       tr.appendChild(tdUser);
-      tr.appendChild(tdAct);
       tbody.appendChild(tr);
     }
 
@@ -675,7 +713,7 @@
     document.getElementById("sortLoc").textContent = sortCol==="location" ? (sortDir==="asc" ? "▲" : "▼") : "";
     document.getElementById("sortUser").textContent = sortCol==="user" ? (sortDir==="asc" ? "▲" : "▼") : "";
 
-    syncTableMaxHeight(); // keep scroll area sized correctly
+    syncTableMaxHeight();
   }
 
   // ---------------- EVENTS ----------------
@@ -689,19 +727,21 @@
     render();
   });
 
-  // Sorting by clicking headers (ignore actions column)
+  // Sorting by clicking headers
   document.querySelectorAll('thead th').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
-      if (!col || col === "actions") return;
+      if (!col) return;
       if (sortCol === col) sortDir = (sortDir === "asc") ? "desc" : "asc";
       else { sortCol = col; sortDir = "asc"; }
       render();
     });
   });
 
-  // ---------------- MODAL CRUD ----------------
-  let editingKey = null;
+  // ---------------- MODAL FLOW (ADD / EDIT) ----------------
+  let mode = "add";          // "add" | "edit"
+  let editingIndex = -1;     // row index in rows[] for edit, after key is found
+  let originalSnapshot = null;
 
   function openModal(){
     modal.style.display = "block";
@@ -710,46 +750,93 @@
   function closeModal(){
     modal.style.display = "none";
     modal.setAttribute("aria-hidden", "true");
-    editingKey = null;
+    mode = "add";
+    editingIndex = -1;
+    originalSnapshot = null;
+    pickWarn.style.display = "none";
+    pickKey.value = "";
   }
 
   closeModalBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
   modal.addEventListener("click", (e)=>{ if (e.target === modal) closeModal(); });
 
   function nextKeyNumber(){
     const max = rows.reduce((m,r)=> Math.max(m, Number(r.key)||0), 0);
-    return max + 1;
+    return Math.min(999, max + 1);
   }
 
-  function openAddModal(){
-    editingKey = null;
+  function openAdd(){
+    mode = "add";
     modalTitle.textContent = "Add key";
-    deleteBtn.style.display = "none";
+    editPickBlock.style.display = "none";
+    pickWarn.style.display = "none";
+
+    fKey.disabled = false;
     fKey.value = nextKeyNumber();
     fLocation.value = "";
     fUser.value = "Servitors";
-    openModal();
-    fLocation.focus();
-  }
-
-  function openEditModal(keyNum){
-    const row = rows.find(r => Number(r.key) === Number(keyNum));
-    if (!row) return;
-
-    editingKey = Number(row.key);
-    modalTitle.textContent = `Edit key #${editingKey}`;
-    deleteBtn.style.display = "inline-block";
-
-    fKey.value = row.key;
-    fLocation.value = row.location || "";
-    fUser.value = normUser(row.user) || "Servitors";
 
     openModal();
     fLocation.focus();
   }
 
-  addBtn.addEventListener("click", openAddModal);
+  function openEdit(){
+    mode = "edit";
+    modalTitle.textContent = "Edit key";
+    editPickBlock.style.display = "block";
+    pickWarn.style.display = "none";
 
+    // In edit mode, user first chooses the key to edit
+    fKey.disabled = true;
+    fKey.value = "";
+    fLocation.value = "";
+    fUser.value = "Servitors";
+
+    originalSnapshot = null;
+    editingIndex = -1;
+
+    openModal();
+    pickKey.focus();
+  }
+
+  addBtn.addEventListener("click", openAdd);
+  editBtn.addEventListener("click", openEdit);
+
+  // When user enters a key to edit, auto-load the record
+  pickKey.addEventListener("input", () => {
+    const k = Number(pickKey.value);
+    if (!k) {
+      pickWarn.style.display = "none";
+      editingIndex = -1;
+      fKey.value = "";
+      fLocation.value = "";
+      return;
+    }
+
+    const idx = rows.findIndex(r => Number(r.key) === k);
+    if (idx < 0) {
+      pickWarn.style.display = "block";
+      editingIndex = -1;
+      fKey.value = "";
+      fLocation.value = "";
+      return;
+    }
+
+    pickWarn.style.display = "none";
+    editingIndex = idx;
+
+    // Load values
+    const r = rows[idx];
+    fKey.value = r.key;
+    fLocation.value = r.location || "";
+    fUser.value = normUser(r.user) || "Servitors";
+
+    // Snapshot for cancel (not strictly needed, but helpful)
+    originalSnapshot = { key: r.key, location: r.location || "", user: normUser(r.user) };
+  });
+
+  // Save (Add/Edit)
   form.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -757,40 +844,32 @@
     const location = String(fLocation.value ?? "").trim();
     const user = normUser(fUser.value);
 
-    if (!keyNum || !location || !user) return;
+    if (!keyNum || keyNum < 1 || keyNum > 999) return;
+    if (!location) return;
+    if (!user || user === "NA" || !allowedUsersOrder.includes(user)) return;
 
-    if (user === "NA" || user === "" || !allowedUsersOrder.includes(user)) {
-      alert("Invalid user type.");
-      return;
-    }
+    if (mode === "add") {
+      // ensure unique key
+      const exists = rows.some(r => Number(r.key) === keyNum);
+      if (exists) { alert("That key already exists."); return; }
 
-    const existsOther = rows.some(r => Number(r.key) === keyNum && Number(r.key) !== editingKey);
-    if (existsOther){
-      alert("That key number already exists.");
-      return;
-    }
-
-    if (editingKey === null){
       rows.push({ key: keyNum, location, user });
-    } else {
-      const idx = rows.findIndex(r => Number(r.key) === editingKey);
-      if (idx >= 0) rows[idx] = { key: keyNum, location, user };
+      rows.sort((a,b)=> Number(a.key) - Number(b.key));
+      saveRows();
+      closeModal();
+      render();
+      return;
     }
 
-    rows.sort((a,b)=> Number(a.key) - Number(b.key));
+    // edit mode
+    if (editingIndex < 0) {
+      alert("Enter an existing key number to edit.");
+      return;
+    }
 
-    saveRows();
-    closeModal();
-    render();
-  });
-
-  deleteBtn.addEventListener("click", () => {
-    if (editingKey === null) return;
-    const ok = confirm(`Delete key #${editingKey}?`);
-    if (!ok) return;
-
-    const idx = rows.findIndex(r => Number(r.key) === editingKey);
-    if (idx >= 0) rows.splice(idx, 1);
+    // Update only location/user (key stays the same in edit mode)
+    rows[editingIndex].location = location;
+    rows[editingIndex].user = user;
 
     saveRows();
     closeModal();
@@ -804,16 +883,12 @@
     })[c]);
   }
 
-  // Make table area fit the screen so header stays pinned without overlapping rows
+  // Make table area fit the screen
   function syncTableMaxHeight(){
-    // Available space from tableWrap top to bottom of viewport, leaving a little padding
     const rect = tableWrap.getBoundingClientRect();
     const pad = 14;
     const available = window.innerHeight - rect.top - pad;
-
-    // Minimum height so it doesn't get too small on tiny screens
     const minH = 260;
-
     tableWrap.style.maxHeight = Math.max(minH, Math.floor(available)) + "px";
   }
   window.addEventListener("resize", syncTableMaxHeight);
