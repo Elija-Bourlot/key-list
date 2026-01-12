@@ -1,77 +1,125 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deister Key List – Search & Filters</title>
+  <title>Deister Key List</title>
   <style>
-    :root { --bg:#0b0c10; --card:#14161d; --text:#e8e8ea; --muted:#a7a7ad; --line:#2a2d39; }
-    * { box-sizing: border-box; }
+    :root{
+      --bg:#0b0c10;
+      --card:#121521;
+      --text:#eef0f4;
+      --muted:#a7adbb;
+      --line:#2a2f44;
+      --chip:#0f1320;
+      --header:#0e1220;
+      --accent:#7aa2ff;
+    }
+    *{ box-sizing:border-box; }
     body{
-      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(180deg, #0b0c10, #0b0c10 60%, #0f1118);
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: var(--bg);
       color: var(--text);
     }
-    header{
-      padding: 24px 16px 12px;
+
+    /* Sticky top title bar */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(14,18,32,.92);
+      border-bottom: 1px solid rgba(42,47,68,.8);
+    }
+    .topbar-inner{
       max-width: 1100px;
       margin: 0 auto;
+      padding: 12px 14px;
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    h1{ margin:0 0 6px; font-size: 20px; letter-spacing: .2px; }
-    .sub{ margin:0; color: var(--muted); font-size: 13px; }
+    h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.2px;
+      line-height:1.2;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.3;
+    }
+    .top-meta{
+      display:flex;
+      justify-content: space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
 
-    .wrap{ max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; }
-
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 12px 14px 40px;
+    }
     .panel{
-      background: rgba(20,22,29,.9);
-      border: 1px solid var(--line);
+      background: rgba(18,21,33,.9);
+      border: 1px solid rgba(42,47,68,.9);
       border-radius: 14px;
-      padding: 14px;
+      padding: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
 
+    /* Controls: mobile-first = stacked */
     .controls{
-      display:grid;
-      grid-template-columns: 1fr;
+      display:flex;
+      flex-direction: column;
       gap: 10px;
     }
-    @media (min-width: 820px){
-      .controls{ grid-template-columns: 1.2fr .8fr; align-items: start; }
-    }
-
-    .searchRow{
+    .row{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
     }
     input[type="search"]{
-      flex: 1 1 320px;
+      flex: 1 1 260px;
+      min-width: 220px;
       padding: 10px 12px;
       border-radius: 12px;
-      border: 1px solid var(--line);
-      background: #0f1118;
+      border: 1px solid rgba(42,47,68,.9);
+      background: #0f1320;
       color: var(--text);
-      outline: none;
+      outline:none;
     }
-    input[type="search"]::placeholder{ color: #7f8087; }
+    input[type="search"]::placeholder{ color:#7f8698; }
+
     .btn{
       padding: 10px 12px;
       border-radius: 12px;
-      border: 1px solid var(--line);
-      background: #0f1118;
+      border: 1px solid rgba(42,47,68,.9);
+      background: #0f1320;
       color: var(--text);
       cursor:pointer;
       user-select:none;
     }
-    .btn:hover{ border-color:#3a3f52; }
+    .btn:hover{ border-color:#3a4260; }
     .btn:active{ transform: translateY(1px); }
 
+    .filtersTitle{
+      color: var(--muted);
+      font-size: 12px;
+      margin: 2px 0 6px;
+    }
     .filters{
       display:flex;
       flex-wrap:wrap;
-      gap:8px 12px;
-      padding-top: 6px;
+      gap:8px 10px;
     }
     .chip{
       display:flex;
@@ -79,139 +127,252 @@
       gap:8px;
       padding: 8px 10px;
       border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #0f1118;
-      color: var(--text);
-      font-size: 13px;
-    }
-    .chip input{ accent-color: #7aa2ff; }
-
-    .meta{
-      display:flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items:center;
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .meta code{
-      background:#0f1118;
-      border:1px solid var(--line);
-      padding:2px 6px;
-      border-radius:8px;
-      color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      border: 1px solid rgba(42,47,68,.9);
+      background: var(--chip);
       font-size: 12px;
     }
+    .chip input{ accent-color: var(--accent); }
 
+    /* Table scroll container */
     .tableWrap{
-      margin-top: 14px;
-      border: 1px solid var(--line);
+      margin-top: 12px;
+      border: 1px solid rgba(42,47,68,.9);
       border-radius: 14px;
-      overflow: hidden;
-      background: rgba(20,22,29,.75);
+      background: rgba(18,21,33,.8);
+
+      /* IMPORTANT: make the table itself scrollable */
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+
+      /* will be set dynamically by JS for perfect fit */
+      max-height: 60vh;
     }
+
     table{
       width:100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 13px;
+      min-width: 560px; /* helps mobile horizontal scroll if needed */
     }
+
+    /* Sticky header inside the table scroll area */
     thead th{
-      position: sticky; top:0;
-      background: #111421;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
+      position: sticky;
+      top: 0;                 /* <-- fixed at top of tableWrap */
+      z-index: 20;
+      background: rgba(17,21,34,.98);
+      border-bottom: 1px solid rgba(42,47,68,.9);
+      text-align:left;
       padding: 10px 12px;
-      font-weight: 650;
-      cursor: pointer;
+      font-weight: 700;
+      cursor:pointer;
       user-select:none;
       white-space: nowrap;
     }
-    thead th small{ color: var(--muted); font-weight: 500; margin-left: 6px; }
+    thead th small{ color: var(--muted); font-weight: 700; margin-left: 6px; }
+
     tbody td{
-      border-top: 1px solid rgba(42,45,57,.7);
+      border-top: 1px solid rgba(42,47,68,.55);
       padding: 10px 12px;
       vertical-align: top;
+      background: transparent;
     }
     tbody tr:hover{ background: rgba(122,162,255,.06); }
-    .muted{ color: var(--muted); }
+
     .tag{
       display:inline-block;
       padding: 3px 8px;
       border-radius: 999px;
-      border: 1px solid var(--line);
-      background:#0f1118;
+      border: 1px solid rgba(42,47,68,.9);
+      background:#0f1320;
       font-size: 12px;
-      color: var(--text);
       white-space: nowrap;
     }
-    .empty{ color: #7f8087; font-style: italic; }
-    footer{ color: var(--muted); font-size: 12px; margin-top: 14px; }
-    .kbd{
-      border:1px solid var(--line);
-      background:#0f1118;
-      padding: 1px 6px;
-      border-radius: 6px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    .empty{ color:#7f8698; font-style: italic; }
+
+    .btn-sm{
+      padding: 6px 10px;
+      border-radius: 10px;
       font-size: 12px;
-      color: var(--text);
+    }
+
+    @media (min-width: 860px){
+      .topbar-inner{
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1{ font-size: 18px; }
+      .subtitle{ max-width: 560px; text-align:right; }
+      .controls{
+        display:grid;
+        grid-template-columns: 1.2fr .8fr;
+        gap: 12px;
+        align-items: start;
+      }
+    }
+
+    /* Modal */
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:100;
+      background:rgba(0,0,0,.55);
+      padding: 14px;
+    }
+    .modal-card{
+      max-width: 680px;
+      margin: 10vh auto;
+      border-radius: 14px;
+      border: 1px solid rgba(42,47,68,.9);
+      background: rgba(18,21,33,.98);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: rgba(14,18,32,.95);
+      border-bottom: 1px solid rgba(42,47,68,.9);
+    }
+    .modal-title{
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: .2px;
+    }
+    .modal-body{ padding: 14px; }
+    .form{
+      display:grid;
+      gap: 10px;
+    }
+    .field-label{
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .input, .select{
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(42,47,68,.9);
+      background:#0f1320;
+      color:var(--text);
+      outline:none;
+    }
+    .form-actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top: 6px;
+    }
+    .note{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+      line-height: 1.35;
+    }
+    .danger{
+      border-color: rgba(255,120,120,.65) !important;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Deister Key List – Search & Filters</h1>
-    <p class="sub">Busca por qualquer texto (key number, prédio, tipo de usuário) + filtros por <code>user</code>.</p>
-  </header>
+  <div class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>Deister Key List</h1>
+        <p class="subtitle">Search across key number, location and user. Use filters for user groups.</p>
+      </div>
+      <div class="top-meta">
+        <div>Results: <strong id="count">0</strong> / <span id="total">0</span></div>
+      </div>
+    </div>
+  </div>
 
   <div class="wrap">
-    <div class="panel">
-      <div class="controls">
+    <div class="panel" id="panel">
+      <div class="controls" id="controls">
         <div>
-          <div class="searchRow">
-            <input id="q" type="search" placeholder="Buscar… (ex: 40 george, hope park, master, 2nd floor, etc)" autocomplete="off" />
-            <button class="btn" id="clearBtn" title="Limpar busca e filtros">Limpar</button>
-            <button class="btn" id="csvBtn" title="Exportar CSV do resultado filtrado">Exportar CSV</button>
-          </div>
-          <div class="meta">
-            <div>
-              Resultados: <strong id="count">0</strong> / <span id="total">0</span>
-              <span class="muted">• Ordene clicando nos títulos das colunas</span>
-            </div>
-            <div class="muted">
-              Dica: <span class="kbd">Ctrl</span> + <span class="kbd">F</span> também funciona, mas a busca acima filtra.
-            </div>
+          <div class="row">
+            <input id="q" type="search" placeholder="Search… e.g. 40 George, Hope Park, Master, 2nd Floor" autocomplete="off" />
+            <button class="btn" id="clearBtn" title="Clear search and filters">Clear</button>
+            <button class="btn" id="addBtn" title="Add a new key">Add key</button>
           </div>
         </div>
 
         <div>
-          <div class="muted" style="margin-bottom:6px;">Filtrar por User:</div>
+          <div class="filtersTitle">Filter by user:</div>
           <div class="filters" id="filters"></div>
         </div>
       </div>
 
-      <div class="tableWrap" role="region" aria-label="Tabela de chaves" tabindex="0">
+      <div class="tableWrap" id="tableWrap" role="region" aria-label="Key list table" tabindex="0">
         <table>
           <thead>
             <tr>
-              <th data-col="key" data-type="number">Key Number <small id="sortKey"></small></th>
-              <th data-col="location" data-type="text">Location <small id="sortLoc"></small></th>
-              <th data-col="user" data-type="text">User <small id="sortUser"></small></th>
+              <th data-col="key">Key # <small id="sortKey"></small></th>
+              <th data-col="location">Location <small id="sortLoc"></small></th>
+              <th data-col="user">User <small id="sortUser"></small></th>
+              <th data-col="actions" style="cursor:default;">Edit</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
+    </div>
+  </div>
 
-      <footer>
-        Sugestão: publique isso no GitHub Pages e compartilhe o link com o time. Se quiser, dá pra adicionar “atalhos” (ex: botões rápidos para “Cleaners Master”, “Security”, etc).
-      </footer>
+  <!-- Modal -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="modalTitle">Add key</div>
+        <button class="btn btn-sm" id="closeModalBtn" aria-label="Close">Close</button>
+      </div>
+      <div class="modal-body">
+        <form class="form" id="form">
+          <label>
+            <div class="field-label">Key number</div>
+            <input class="input" id="fKey" type="number" min="1" required />
+          </label>
+
+          <label>
+            <div class="field-label">Location</div>
+            <input class="input" id="fLocation" type="text" required />
+          </label>
+
+          <label>
+            <div class="field-label">User</div>
+            <select class="select" id="fUser" required>
+              <option value="Servitors">Servitors</option>
+              <option value="Cleaners">Cleaners</option>
+              <option value="Security">Security</option>
+              <option value="Accommodation">Accommodation</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn btn-sm danger" type="button" id="deleteBtn" style="display:none;">Delete</button>
+            <button class="btn btn-sm" type="submit" id="saveBtn">Save</button>
+          </div>
+
+          <div class="note">
+            Changes are saved to this browser (localStorage). Works on GitHub Pages with no backend.
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
 <script>
-  // ---- DATA (da sua tabela) ----
+  // ---------------- DATA ----------------
+  // NA and blank-user rows stay in data but are excluded from display and filters.
   const rows = [
     {key:1, location:"Appleton tower", user:"Security"},
     {key:2, location:"40 GS/Café", user:"Security"},
@@ -277,12 +438,12 @@
     {key:62, location:"50 George Square", user:"Servitors"},
     {key:63, location:"50 George Square", user:"Servitors"},
     {key:64, location:"50 George Square", user:"Servitors"},
-    {key:65, location:"40 george square", user:"Servitors"},
+    {key:65, location:"40 George Square", user:"Servitors"},
     {key:66, location:"NA", user:"NA"},
     {key:67, location:"CMB", user:"Servitors"},
-    {key:68, location:"21 Buccleuch Place 2.06", user:"Security"}, // normalize
+    {key:68, location:"21 Buccleuch Place 2.06", user:"Security"},
     {key:69, location:"Buccleuch Place 2,5,7,8,12", user:"Accommodation"},
-    {key:70, location:"12,97 Buccleuch Street/ 8 Hope Park Square", user:"Accommodation"},
+    {key:70, location:"12,97 Buccleuch Street / 8 Hope Park Square", user:"Accommodation"},
     {key:71, location:"West Nicolson Street 7,11,13,15,19", user:"Accommodation"},
     {key:72, location:"92,96 Nicolson St / 3 Davie St / 1,11 West Richmond St", user:"Accommodation"},
     {key:73, location:"", user:""},
@@ -303,12 +464,12 @@
     {key:88, location:"22B Buccleuch Place", user:"Cleaners"},
     {key:89, location:"", user:""},
     {key:90, location:"34 Buccleuch Place", user:"Cleaners"},
-    {key:91, location:"Business School Lower ground", user:"Cleaners"},
+    {key:91, location:"Business School Lower Ground", user:"Cleaners"},
     {key:92, location:"Business School – Ground Floor", user:"Cleaners"},
-    {key:93, location:"Business School level 1", user:"Cleaners"},
-    {key:94, location:"Business School level 2", user:"Cleaners"},
-    {key:95, location:"Business School level 3", user:"Cleaners"},
-    {key:96, location:"Business School level 4", user:"Cleaners"},
+    {key:93, location:"Business School Level 1", user:"Cleaners"},
+    {key:94, location:"Business School Level 2", user:"Cleaners"},
+    {key:95, location:"Business School Level 3", user:"Cleaners"},
+    {key:96, location:"Business School Level 4", user:"Cleaners"},
     {key:97, location:"17 Buccleuch Place", user:"Cleaners"},
     {key:98, location:"18 Buccleuch Place", user:"Cleaners"},
     {key:99, location:"19 Buccleuch Place", user:"Cleaners"},
@@ -331,33 +492,21 @@
     {key:116, location:"34 Buccleuch Place - 2nd Floor", user:"Cleaners"},
     {key:117, location:"23 Buccleuch Place", user:"Cleaners"},
     {key:118, location:"34 Buccleuch Place – 4th Floor", user:"Cleaners"},
-    {key:119, location:"2 Hope Park square", user:"Cleaners"},
-    {key:120, location:"8 Hope Park square", user:"Cleaners"},
-    {key:121, location:"9 Hope Park square", user:"Cleaners"},
+    {key:119, location:"2 Hope Park Square", user:"Cleaners"},
+    {key:120, location:"8 Hope Park Square", user:"Cleaners"},
+    {key:121, location:"9 Hope Park Square", user:"Cleaners"},
     {key:122, location:"Quartermile (Returned to project team)", user:""},
     {key:123, location:"RHSC (20 Sylvan Place)", user:"Cleaners"},
-    {key:124, location:"McKenzie medical", user:"Cleaners"},
+    {key:124, location:"McKenzie Medical", user:"Cleaners"},
     {key:125, location:"12 Buccleuch Street", user:"Cleaners"},
     {key:126, location:"", user:""},
     {key:127, location:"", user:""},
     {key:128, location:"", user:""}
   ];
 
-  // ---- UI STATE ----
-  const q = document.getElementById('q');
-  const tbody = document.getElementById('tbody');
-  const countEl = document.getElementById('count');
-  const totalEl = document.getElementById('total');
-  const filtersEl = document.getElementById('filters');
-  const clearBtn = document.getElementById('clearBtn');
-  const csvBtn = document.getElementById('csvBtn');
-
-  totalEl.textContent = rows.length;
-
-  const USER_ORDER = ["Servitors","Cleaners","Security","Accommodation","NA",""]; // ordem desejada
-  const normalizeUser = (u) => {
-    if (!u) return "";
-    const s = String(u).trim();
+  // ---------------- NORMALISATION ----------------
+  function normUser(u){
+    const s = String(u ?? "").trim();
     if (!s) return "";
     const low = s.toLowerCase();
     if (low === "security") return "Security";
@@ -366,52 +515,83 @@
     if (low === "accommodation") return "Accommodation";
     if (low === "na") return "NA";
     return s;
-  };
+  }
+  rows.forEach(r => r.user = normUser(r.user));
 
-  // Normaliza users na base (por segurança)
-  rows.forEach(r => r.user = normalizeUser(r.user));
+  // ---------------- ELEMENTS ----------------
+  const q = document.getElementById('q');
+  const tbody = document.getElementById('tbody');
+  const countEl = document.getElementById('count');
+  const totalEl = document.getElementById('total');
+  const filtersEl = document.getElementById('filters');
+  const clearBtn = document.getElementById('clearBtn');
+  const addBtn = document.getElementById('addBtn');
+  const tableWrap = document.getElementById('tableWrap');
 
-  const users = Array.from(new Set(rows.map(r => normalizeUser(r.user)))).sort((a,b)=>{
-    const ia = USER_ORDER.indexOf(a);
-    const ib = USER_ORDER.indexOf(b);
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib) || a.localeCompare(b);
-  });
+  // Modal elements
+  const modal = document.getElementById("modal");
+  const modalTitle = document.getElementById("modalTitle");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const form = document.getElementById("form");
+  const fKey = document.getElementById("fKey");
+  const fLocation = document.getElementById("fLocation");
+  const fUser = document.getElementById("fUser");
+  const deleteBtn = document.getElementById("deleteBtn");
 
-  // selected users (default: todos marcados, exceto vazio)
-  const selectedUsers = new Set(users.filter(u => u !== ""));
+  totalEl.textContent = rows.length;
+
+  // Allowed users (filters exclude NA and blank user)
+  const allowedUsersOrder = ["Servitors","Cleaners","Security","Accommodation"];
+  const users = Array.from(new Set(rows.map(r => r.user)))
+    .filter(u => u && u !== "NA" && allowedUsersOrder.includes(u))
+    .sort((a,b)=> allowedUsersOrder.indexOf(a) - allowedUsersOrder.indexOf(b));
+
+  // Default: all allowed users selected
+  const selectedUsers = new Set(users);
 
   // Sorting state
   let sortCol = "key";
   let sortDir = "asc"; // asc | desc
 
-  // ---- RENDER FILTERS ----
+  // ---------------- LOCAL STORAGE ----------------
+  const STORAGE_KEY = "deister_key_list_v1";
+
+  function loadRows(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+  function saveRows(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+  }
+
+  // If saved exists, replace initial dataset
+  const saved = loadRows();
+  if (saved && Array.isArray(saved) && saved.length){
+    rows.length = 0;
+    saved.forEach(x => rows.push(x));
+    rows.forEach(r => r.user = normUser(r.user));
+  }
+
+  // ---------------- FILTERS ----------------
   function renderFilters(){
     filtersEl.innerHTML = "";
     users.forEach(u => {
-      const id = "u_" + (u || "vazio");
       const label = document.createElement('label');
       label.className = "chip";
+
       const cb = document.createElement('input');
       cb.type = "checkbox";
-      cb.id = id;
-
-      const isEmpty = (u === "");
-      cb.checked = isEmpty ? false : selectedUsers.has(u);
+      cb.checked = selectedUsers.has(u);
 
       cb.addEventListener('change', () => {
-        if (isEmpty) {
-          // "vazio" é opcional; quando marcado, vamos filtrar por vazio também
-          if (cb.checked) selectedUsers.add("");
-          else selectedUsers.delete("");
-        } else {
-          if (cb.checked) selectedUsers.add(u);
-          else selectedUsers.delete(u);
-        }
+        if (cb.checked) selectedUsers.add(u);
+        else selectedUsers.delete(u);
         render();
       });
 
       const span = document.createElement('span');
-      span.textContent = u === "" ? "Sem user" : u;
+      span.textContent = u;
 
       label.appendChild(cb);
       label.appendChild(span);
@@ -419,49 +599,51 @@
     });
   }
 
-  // ---- FILTER + SEARCH ----
+  // ---------------- FILTER + SEARCH ----------------
+  function shouldDisplayRow(r){
+    if (!r.user || r.user === "NA") return false;
+    if (!allowedUsersOrder.includes(r.user)) return false;
+    return true;
+  }
+
   function applyFilters(){
     const term = q.value.trim().toLowerCase();
 
     return rows.filter(r => {
-      const u = normalizeUser(r.user);
-      const passUser = selectedUsers.size === 0 ? true : selectedUsers.has(u);
-      if (!passUser) return false;
+      if (!shouldDisplayRow(r)) return false;
+
+      if (selectedUsers.size && !selectedUsers.has(r.user)) return false;
 
       if (!term) return true;
-
-      const hay = `${r.key}\t${(r.location||"")}\t${u}`.toLowerCase();
+      const hay = `${r.key}\t${r.location || ""}\t${r.user}`.toLowerCase();
       return hay.includes(term);
     });
   }
 
-  // ---- SORT ----
+  // ---------------- SORT ----------------
   function sortData(data){
     const dir = sortDir === "asc" ? 1 : -1;
-    const col = sortCol;
-
     const getVal = (r) => {
-      if (col === "key") return Number(r.key);
-      if (col === "location") return (r.location || "").toLowerCase();
-      if (col === "user") return (normalizeUser(r.user) || "").toLowerCase();
+      if (sortCol === "key") return Number(r.key);
+      if (sortCol === "location") return (r.location || "").toLowerCase();
+      if (sortCol === "user") return (r.user || "").toLowerCase();
       return "";
     };
-
-    return data.slice().sort((a,b) => {
+    return data.slice().sort((a,b)=>{
       const va = getVal(a), vb = getVal(b);
       if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
       return String(va).localeCompare(String(vb)) * dir;
     });
   }
 
-  // ---- RENDER TABLE ----
+  // ---------------- RENDER TABLE ----------------
   function render(){
     let data = applyFilters();
     data = sortData(data);
 
     countEl.textContent = data.length;
-
     tbody.innerHTML = "";
+
     for (const r of data){
       const tr = document.createElement('tr');
 
@@ -469,93 +651,177 @@
       tdKey.textContent = r.key;
 
       const tdLoc = document.createElement('td');
-      tdLoc.textContent = r.location || "";
       if (!r.location) tdLoc.innerHTML = '<span class="empty">—</span>';
+      else tdLoc.textContent = r.location;
 
       const tdUser = document.createElement('td');
-      const u = normalizeUser(r.user);
-      if (!u) tdUser.innerHTML = '<span class="empty">—</span>';
-      else tdUser.innerHTML = `<span class="tag">${escapeHtml(u)}</span>`;
+      tdUser.innerHTML = `<span class="tag">${escapeHtml(r.user)}</span>`;
+
+      const tdAct = document.createElement('td');
+      const editBtn = document.createElement('button');
+      editBtn.className = "btn btn-sm";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener('click', () => openEditModal(r.key));
+      tdAct.appendChild(editBtn);
 
       tr.appendChild(tdKey);
       tr.appendChild(tdLoc);
       tr.appendChild(tdUser);
+      tr.appendChild(tdAct);
       tbody.appendChild(tr);
     }
 
-    // sort indicators
     document.getElementById("sortKey").textContent = sortCol==="key" ? (sortDir==="asc" ? "▲" : "▼") : "";
     document.getElementById("sortLoc").textContent = sortCol==="location" ? (sortDir==="asc" ? "▲" : "▼") : "";
     document.getElementById("sortUser").textContent = sortCol==="user" ? (sortDir==="asc" ? "▲" : "▼") : "";
+
+    syncTableMaxHeight(); // keep scroll area sized correctly
   }
 
-  // ---- EVENTS ----
+  // ---------------- EVENTS ----------------
   q.addEventListener('input', render);
 
   clearBtn.addEventListener('click', () => {
     q.value = "";
     selectedUsers.clear();
-    // volta ao padrão: todos (menos vazio)
-    users.forEach(u => { if (u !== "") selectedUsers.add(u); });
+    users.forEach(u => selectedUsers.add(u));
     renderFilters();
     render();
   });
 
-  csvBtn.addEventListener('click', () => {
-    const data = sortData(applyFilters());
-    const csv = toCSV(data);
-    downloadText(csv, "deister_key_list_filtered.csv", "text/csv;charset=utf-8");
-  });
-
-  // Sorting by header click
+  // Sorting by clicking headers (ignore actions column)
   document.querySelectorAll('thead th').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
-      if (!col) return;
+      if (!col || col === "actions") return;
       if (sortCol === col) sortDir = (sortDir === "asc") ? "desc" : "asc";
       else { sortCol = col; sortDir = "asc"; }
       render();
     });
   });
 
-  // ---- UTILS ----
+  // ---------------- MODAL CRUD ----------------
+  let editingKey = null;
+
+  function openModal(){
+    modal.style.display = "block";
+    modal.setAttribute("aria-hidden", "false");
+  }
+  function closeModal(){
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    editingKey = null;
+  }
+
+  closeModalBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e)=>{ if (e.target === modal) closeModal(); });
+
+  function nextKeyNumber(){
+    const max = rows.reduce((m,r)=> Math.max(m, Number(r.key)||0), 0);
+    return max + 1;
+  }
+
+  function openAddModal(){
+    editingKey = null;
+    modalTitle.textContent = "Add key";
+    deleteBtn.style.display = "none";
+    fKey.value = nextKeyNumber();
+    fLocation.value = "";
+    fUser.value = "Servitors";
+    openModal();
+    fLocation.focus();
+  }
+
+  function openEditModal(keyNum){
+    const row = rows.find(r => Number(r.key) === Number(keyNum));
+    if (!row) return;
+
+    editingKey = Number(row.key);
+    modalTitle.textContent = `Edit key #${editingKey}`;
+    deleteBtn.style.display = "inline-block";
+
+    fKey.value = row.key;
+    fLocation.value = row.location || "";
+    fUser.value = normUser(row.user) || "Servitors";
+
+    openModal();
+    fLocation.focus();
+  }
+
+  addBtn.addEventListener("click", openAddModal);
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const keyNum = Number(fKey.value);
+    const location = String(fLocation.value ?? "").trim();
+    const user = normUser(fUser.value);
+
+    if (!keyNum || !location || !user) return;
+
+    if (user === "NA" || user === "" || !allowedUsersOrder.includes(user)) {
+      alert("Invalid user type.");
+      return;
+    }
+
+    const existsOther = rows.some(r => Number(r.key) === keyNum && Number(r.key) !== editingKey);
+    if (existsOther){
+      alert("That key number already exists.");
+      return;
+    }
+
+    if (editingKey === null){
+      rows.push({ key: keyNum, location, user });
+    } else {
+      const idx = rows.findIndex(r => Number(r.key) === editingKey);
+      if (idx >= 0) rows[idx] = { key: keyNum, location, user };
+    }
+
+    rows.sort((a,b)=> Number(a.key) - Number(b.key));
+
+    saveRows();
+    closeModal();
+    render();
+  });
+
+  deleteBtn.addEventListener("click", () => {
+    if (editingKey === null) return;
+    const ok = confirm(`Delete key #${editingKey}?`);
+    if (!ok) return;
+
+    const idx = rows.findIndex(r => Number(r.key) === editingKey);
+    if (idx >= 0) rows.splice(idx, 1);
+
+    saveRows();
+    closeModal();
+    render();
+  });
+
+  // ---------------- UTILS ----------------
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c => ({
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     })[c]);
   }
 
-  function toCSV(data){
-    const header = ["Key Number","Location","User"];
-    const lines = [header.join(",")];
-    for (const r of data){
-      const row = [
-        r.key,
-        csvCell(r.location || ""),
-        csvCell(normalizeUser(r.user) || "")
-      ];
-      lines.push(row.join(","));
-    }
-    return lines.join("\n");
-  }
-  function csvCell(v){
-    const s = String(v).replace(/"/g,'""');
-    return `"${s}"`;
-  }
-  function downloadText(text, filename, mime){
-    const blob = new Blob([text], {type: mime});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 500);
-  }
+  // Make table area fit the screen so header stays pinned without overlapping rows
+  function syncTableMaxHeight(){
+    // Available space from tableWrap top to bottom of viewport, leaving a little padding
+    const rect = tableWrap.getBoundingClientRect();
+    const pad = 14;
+    const available = window.innerHeight - rect.top - pad;
 
-  // init
+    // Minimum height so it doesn't get too small on tiny screens
+    const minH = 260;
+
+    tableWrap.style.maxHeight = Math.max(minH, Math.floor(available)) + "px";
+  }
+  window.addEventListener("resize", syncTableMaxHeight);
+
+  // ---------------- INIT ----------------
   renderFilters();
   render();
+  syncTableMaxHeight();
 </script>
 </body>
 </html>
