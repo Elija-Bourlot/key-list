@@ -14,6 +14,10 @@
       --header:#0e1220;
       --accent:#7aa2ff;
     }
+
+    /* Prevent iOS text auto-resize quirks */
+    html { -webkit-text-size-adjust: 100%; }
+
     *{ box-sizing:border-box; }
     body{
       margin:0;
@@ -88,6 +92,13 @@
       align-items:center;
     }
 
+    /* Prevent iOS Safari auto-zoom on focus: keep 16px+ */
+    input[type="search"],
+    .input,
+    .select{
+      font-size: 16px;
+    }
+
     input[type="search"]{
       flex: 1 1 260px;
       min-width: 220px;
@@ -109,14 +120,21 @@
       cursor:pointer;
       user-select:none;
       white-space: nowrap;
+
+      /* Helps reduce odd tap/zoom behaviour on mobile */
+      touch-action: manipulation;
     }
     .btn:hover{ border-color:#3a4260; }
-    .btn:active{ transform: translateY(1px); }
+    /* Remove “push/zoom” feel on tap */
+    .btn:active{ transform: none; }
+
     .btn-sm{
       padding: 8px 10px;
       border-radius: 10px;
       font-size: 12px;
+      touch-action: manipulation;
     }
+    .btn-sm:active{ transform:none; }
 
     .filtersTitle{
       color: var(--muted);
@@ -231,9 +249,6 @@
         gap: 12px;
         align-items: start;
       }
-      .actions{
-        justify-content: flex-start;
-      }
     }
 
     /* Modal */
@@ -332,10 +347,9 @@
         </div>
 
         <div>
-          <div class="filtersTitle">Filter by user:</div>
+          <div class="filtersTitle">Filter by user (NA / blank excluded):</div>
           <div class="filters" id="filters"></div>
 
-          <!-- Buttons moved below filters -->
           <div class="actions">
             <button class="btn" id="addBtn" title="Add a new key">Add key</button>
             <button class="btn" id="editBtn" title="Edit an existing key by number">Edit key</button>
@@ -655,7 +669,6 @@
 
     return rows.filter(r => {
       if (!shouldDisplayRow(r)) return false;
-
       if (selectedUsers.size && !selectedUsers.has(r.user)) return false;
 
       if (!term) return true;
@@ -740,8 +753,7 @@
 
   // ---------------- MODAL FLOW (ADD / EDIT) ----------------
   let mode = "add";          // "add" | "edit"
-  let editingIndex = -1;     // row index in rows[] for edit, after key is found
-  let originalSnapshot = null;
+  let editingIndex = -1;     // row index in rows[] for edit
 
   function openModal(){
     modal.style.display = "block";
@@ -752,7 +764,6 @@
     modal.setAttribute("aria-hidden", "true");
     mode = "add";
     editingIndex = -1;
-    originalSnapshot = null;
     pickWarn.style.display = "none";
     pickKey.value = "";
   }
@@ -787,13 +798,11 @@
     editPickBlock.style.display = "block";
     pickWarn.style.display = "none";
 
-    // In edit mode, user first chooses the key to edit
+    // Choose key first
     fKey.disabled = true;
     fKey.value = "";
     fLocation.value = "";
     fUser.value = "Servitors";
-
-    originalSnapshot = null;
     editingIndex = -1;
 
     openModal();
@@ -803,7 +812,7 @@
   addBtn.addEventListener("click", openAdd);
   editBtn.addEventListener("click", openEdit);
 
-  // When user enters a key to edit, auto-load the record
+  // Auto-load record when a key is entered
   pickKey.addEventListener("input", () => {
     const k = Number(pickKey.value);
     if (!k) {
@@ -826,14 +835,10 @@
     pickWarn.style.display = "none";
     editingIndex = idx;
 
-    // Load values
     const r = rows[idx];
     fKey.value = r.key;
     fLocation.value = r.location || "";
     fUser.value = normUser(r.user) || "Servitors";
-
-    // Snapshot for cancel (not strictly needed, but helpful)
-    originalSnapshot = { key: r.key, location: r.location || "", user: normUser(r.user) };
   });
 
   // Save (Add/Edit)
@@ -849,7 +854,6 @@
     if (!user || user === "NA" || !allowedUsersOrder.includes(user)) return;
 
     if (mode === "add") {
-      // ensure unique key
       const exists = rows.some(r => Number(r.key) === keyNum);
       if (exists) { alert("That key already exists."); return; }
 
